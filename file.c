@@ -1842,14 +1842,6 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     if (!cf_read_record(cf, fdata, &rec, &buf))
       break; /* error reading the frame */
 
-    /* If the previous frame is displayed, and we haven't yet seen the
-       selected frame, remember that frame - it's the closest one we've
-       yet seen before the selected frame. */
-    if (prev_frame_num != -1 && !selected_frame_seen && prev_frame->passed_dfilter) {
-      preceding_frame_num = prev_frame_num;
-      preceding_frame = prev_frame;
-    }
-
     start_clock = clock();
     add_packet_to_packet_list(fdata, cf, &edt, dfcode,
                                     cinfo, &rec, &buf,
@@ -1857,6 +1849,16 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
 
     end_clock = clock();
     t3 += (end_clock - start_clock);
+
+    start_clock = clock();
+    /* If the previous frame is displayed, and we haven't yet seen the
+       selected frame, remember that frame - it's the closest one we've
+       yet seen before the selected frame. */
+    if (prev_frame_num != -1 && !selected_frame_seen && prev_frame->passed_dfilter) {
+      preceding_frame_num = prev_frame_num;
+      preceding_frame = prev_frame;
+    }
+ 
     /* If this frame is displayed, and this is the first frame we've
        seen displayed after the selected frame, remember this frame -
        it's the closest one we've yet seen at or after the selected
@@ -1875,11 +1877,14 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
        on the next pass through the loop. */
     prev_frame_num = fdata->num;
     prev_frame = fdata;
+    end_clock = clock();
+    t4 += (end_clock - start_clock);
   }
   t1 /= CLOCKS_PER_SEC;
   t2 /= CLOCKS_PER_SEC;
   t3 /= CLOCKS_PER_SEC;
-  printf("t1:%f t2:%f t3:%f\n", t1, t2, t3);
+  t4 /= CLOCKS_PER_SEC;
+  printf("t1:%f t2:%f t3:%f t4:%f\n", t1, t2, t3, t4);
   clock_t end = clock();
   double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
   printf("Framenum loop: %f\n", time_spent);
