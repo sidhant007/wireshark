@@ -1847,7 +1847,7 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     cf->provider.prev_cap = fdata;
 
     if (dfcode != NULL) {
-        epan_dissect_prime_with_dfilter(edt, dfcode);
+        epan_dissect_prime_with_dfilter(&edt, dfcode);
     }
     end_clock = clock();
     t1 += (end_clock - start_clock);
@@ -1865,15 +1865,15 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     if (!fdata->visited) {
         /* This is the first pass, so prime the epan_dissect_t with the
            hfids postdissectors want on the first pass. */
-        prime_epan_dissect_with_postdissector_wanted_hfids(edt);
+        prime_epan_dissect_with_postdissector_wanted_hfids(&edt);
     }
     end_clock = clock();
     t2 += (end_clock - start_clock);
 
     start_clock = clock();
     /* Dissect the frame. */
-    epan_dissect_run_with_taps(edt, cf->cd_t, rec,
-                               frame_tvbuff_new_buffer(&cf->provider, fdata, buf),
+    epan_dissect_run_with_taps(&edt, cf->cd_t, &rec,
+                               frame_tvbuff_new_buffer(&cf->provider, fdata, &buf),
                                fdata, cinfo);
     end_clock = clock();
     t3 += (end_clock - start_clock);
@@ -1881,14 +1881,14 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     start_clock = clock();
     /* If we don't have a display filter, set "passed_dfilter" to 1. */
     if (dfcode != NULL) {
-        fdata->passed_dfilter = dfilter_apply_edt(dfcode, edt) ? 1 : 0;
+        fdata->passed_dfilter = dfilter_apply_edt(dfcode, &edt) ? 1 : 0;
 
         if (fdata->passed_dfilter) {
         /* This frame passed the display filter but it may depend on other
         * (potentially not displayed) frames.  Find those frames and mark them
         * as depended upon.
         */
-        g_slist_foreach(edt->pi.dependent_frames, find_and_mark_frame_depended_upon, cf->provider.frames);
+        g_slist_foreach(&edt->pi.dependent_frames, find_and_mark_frame_depended_upon, cf->provider.frames);
         }
     } else
         fdata->passed_dfilter = 1;
@@ -1917,7 +1917,7 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
         cf->last_displayed = fdata->num;
     }
 
-    epan_dissect_reset(edt);
+    epan_dissect_reset(&edt);
     end_clock = clock();
     t5 += (end_clock - start_clock);
 
