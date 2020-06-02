@@ -1758,8 +1758,13 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     wtap_set_cb_new_secrets(cf->provider.wth, secrets_wtap_callback);
   }
 
+  clock_t begin = clock();
+  float total_time = 0;
   for (framenum = 1; framenum <= frames_count; framenum++) {
+    clock_t start_clock = clock();
     fdata = frame_data_sequence_find(cf->provider.frames, framenum);
+    clock_t end_clock = clock();
+    total_time += (end - begin);
 
     /* Create the progress bar if necessary.
        We check on every iteration of the loop, so that it takes no
@@ -1864,6 +1869,11 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     prev_frame_num = fdata->num;
     prev_frame = fdata;
   }
+  total_time /= CLOCKS_PER_SEC;
+  printf("Inner total: %f\n", total_time);
+  clock_t end = clock();
+  double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+  printf("Framenum loop: %f\n", time_spent);
 
   epan_dissect_cleanup(&edt);
   wtap_rec_cleanup(&rec);
