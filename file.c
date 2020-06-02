@@ -1764,7 +1764,7 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     clock_t start_clock = clock();
     fdata = frame_data_sequence_find(cf->provider.frames, framenum);
     clock_t end_clock = clock();
-    total_time += (end - begin);
+    total_time += (end_clock - start_clock);
 
     /* Create the progress bar if necessary.
        We check on every iteration of the loop, so that it takes no
