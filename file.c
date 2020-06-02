@@ -1759,18 +1759,20 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
   }
 
   clock_t begin = clock();
-  float total_time = 0;
+  clock_t start_clock, end_clock;
+  float t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   for (framenum = 1; framenum <= frames_count; framenum++) {
-    clock_t start_clock = clock();
+    start_clock = clock();
     fdata = frame_data_sequence_find(cf->provider.frames, framenum);
-    clock_t end_clock = clock();
-    total_time += (end_clock - start_clock);
+    end_clock = clock();
+    t1 += (end_clock - start_clock);
 
     /* Create the progress bar if necessary.
        We check on every iteration of the loop, so that it takes no
        longer than the standard time to create it (otherwise, for a
        large file, we might take considerably longer than that standard
        time in order to get to the next progress bar step). */
+    start_clock = clock();
     if (progbar == NULL)
       progbar = delayed_create_progress_dlg(cf->window, action, action_item, TRUE,
                                             &cf->stop_flag,
@@ -1797,6 +1799,8 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
 
       g_timer_start(prog_timer);
     }
+    end_clock = clock();
+    t2 += (end_clock - start_clock);
 
     queued_rescan_type = cf->redissection_queued;
     if (queued_rescan_type != RESCAN_NONE) {
@@ -1846,10 +1850,13 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
       preceding_frame = prev_frame;
     }
 
+    start_clock = clock();
     add_packet_to_packet_list(fdata, cf, &edt, dfcode,
                                     cinfo, &rec, &buf,
                                     add_to_packet_list);
 
+    end_clock = clock();
+    t3 += (end_clock - start_clock);
     /* If this frame is displayed, and this is the first frame we've
        seen displayed after the selected frame, remember this frame -
        it's the closest one we've yet seen at or after the selected
@@ -1869,8 +1876,10 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     prev_frame_num = fdata->num;
     prev_frame = fdata;
   }
-  total_time /= CLOCKS_PER_SEC;
-  printf("Inner total: %f\n", total_time);
+  t1 /= CLOCKS_PER_SEC;
+  t2 /= CLOCKS_PER_SEC;
+  t3 /= CLOCKS_PER_SEC;
+  printf("t1:%f t2:%f t3:%f\n", t1, t2, t3);
   clock_t end = clock();
   double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
   printf("Framenum loop: %f\n", time_spent);
