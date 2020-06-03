@@ -1759,8 +1759,8 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
   }
 
   clock_t begin = clock();
-  clock_t start_clock, end_clock;
-  float t1 = 0, t2 = 0, t3 = 0, t4 = 0, t5 = 0;
+  //clock_t start_clock, end_clock;
+  //float t1 = 0, t2 = 0, t3 = 0, t4 = 0, t5 = 0;
   for (framenum = 1; framenum <= frames_count; framenum++) {
     fdata = frame_data_sequence_find(cf->provider.frames, framenum);
 
@@ -1841,7 +1841,6 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
                                     add_to_packet_list);
                                     */
 
-    start_clock = clock();
     frame_data_set_before_dissect(fdata, &cf->elapsed_time,
                                 &cf->provider.ref, cf->provider.prev_dis);
     cf->provider.prev_cap = fdata;
@@ -1849,8 +1848,6 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     if (dfcode != NULL) {
         epan_dissect_prime_with_dfilter(&edt, dfcode);
     }
-    end_clock = clock();
-    t1 += (end_clock - start_clock);
     #if 0
       /* Prepare coloring rules, this ensures that display filter rules containing
        * frame.color_rule references are still processed.
@@ -1861,24 +1858,17 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
       }
     #endif
 
-    start_clock = clock();
     if (!fdata->visited) {
         /* This is the first pass, so prime the epan_dissect_t with the
            hfids postdissectors want on the first pass. */
         prime_epan_dissect_with_postdissector_wanted_hfids(&edt);
     }
-    end_clock = clock();
-    t2 += (end_clock - start_clock);
 
-    start_clock = clock();
     /* Dissect the frame. */
     epan_dissect_run_with_taps(&edt, cf->cd_t, &rec,
                                frame_tvbuff_new_buffer(&cf->provider, fdata, &buf),
                                fdata, cinfo);
-    end_clock = clock();
-    t3 += (end_clock - start_clock);
 
-    start_clock = clock();
     /* If we don't have a display filter, set "passed_dfilter" to 1. */
     if (dfcode != NULL) {
         fdata->passed_dfilter = dfilter_apply_edt(dfcode, &edt) ? 1 : 0;
@@ -1900,10 +1890,7 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
         /* We fill the needed columns from new_packet_list */
         packet_list_append(cinfo, fdata);
     }
-    end_clock = clock();
-    t4 += (end_clock - start_clock);
 
-    start_clock = clock();
     if (fdata->passed_dfilter || fdata->ref_time)
     {
         frame_data_set_after_dissect(fdata, &cf->cum_bytes);
@@ -1918,8 +1905,6 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     }
 
     epan_dissect_reset(&edt);
-    end_clock = clock();
-    t5 += (end_clock - start_clock);
 
     /* If the previous frame is displayed, and we haven't yet seen the
        selected frame, remember that frame - it's the closest one we've
@@ -1948,12 +1933,14 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
     prev_frame_num = fdata->num;
     prev_frame = fdata;
   }
+  /*
   t1 /= CLOCKS_PER_SEC;
   t2 /= CLOCKS_PER_SEC;
   t3 /= CLOCKS_PER_SEC;
   t4 /= CLOCKS_PER_SEC;
   t5 /= CLOCKS_PER_SEC;
   printf("t1:%f t2:%f t3:%f t4:%f\n t5: %f\n", t1, t2, t3, t4, t5);
+  */
   clock_t end = clock();
   double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
   printf("Framenum loop: %f\n", time_spent);
