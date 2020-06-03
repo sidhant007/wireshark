@@ -1658,6 +1658,8 @@ rescan_packets(capture_file *cf, const char *action, const char *action_item, gb
      (tap_flags & TL_REQUIRES_PROTO_TREE) ||
      (redissect && postdissectors_want_hfids()));
 
+  printf("%d %d %d %d %d %d\n", dfcode != NULL, have_filtering_tap_listeners(), tap_flags, TL_REQUIRES_PROTO_TREE, redissect, postdissectors_want_hfids());
+
   reset_tap_listeners();
   /* Which frame, if any, is the currently selected frame?
      XXX - should the selected frame or the focus frame be the "current"
